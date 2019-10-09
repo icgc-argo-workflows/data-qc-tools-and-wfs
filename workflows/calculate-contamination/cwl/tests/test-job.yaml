@@ -1,11 +1,8 @@
 contamination_name: contamination.table
-interval_files:  # file with intervals over which to operate
-  - class: File
-    path: data/0000-scattered.interval_list
-  - class: File
-    path: data/0001-scattered.interval_list
-  - class: File
-    path: data/0002-scattered.interval_list
+scatter_count: 2
+intervals:  # file with intervals over which to operate
+  class: File
+  path: "data/my-intervals.bed"
 jvm_mem: 1000
 merged_pileup_name: merged.pipeups.tsv
 normal_seq_file:
