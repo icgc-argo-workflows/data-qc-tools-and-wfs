@@ -10,7 +10,7 @@ requirements:
 
 inputs:
     contamination_name: string
-    intervals: File?
+    interval_files: File[]
     jvm_mem: int?
     merged_pileup_name: string
     normal_seq_file:
@@ -23,9 +23,7 @@ inputs:
         - .fai
         - ^.dict
       type: File
-    scatter_count: int
     segmentation_name: string
-    split_intervals_extra_args: string?
     tumour_seq_file:
       type: File
       secondaryFiles: ['.bai?', '.crai?']
@@ -45,16 +43,6 @@ outputs:
 
 steps:
 
-  split_intervals:
-    run: https://raw.githubusercontent.com/icgc-argo/gatk-tools/gatk-split-intervals.4.1.3.0-1.0/tools/gatk-split-intervals/gatk-split-intervals.cwl
-    in:
-      jvm_mem: jvm_mem
-      ref_fa: ref_fa
-      intervals: intervals
-      scatter_count: scatter_count
-      split_intervals_extra_args: split_intervals_extra_args
-    out: [ interval_files ]
-
   get_normal_pileup_summaries:
     run: https://raw.githubusercontent.com/icgc-argo/gatk-tools/gatk-get-pileup-summaries.4.1.3.0-1.1/tools/gatk-get-pileup-summaries/gatk-get-pileup-summaries.cwl
     scatter: intervals
@@ -63,7 +51,7 @@ steps:
       ref_fa: ref_fa
       seq_file: normal_seq_file
       variants: variants_for_contamination
-      intervals: split_intervals/interval_files
+      intervals: interval_files
       output_name: pileup_summary_name
     out: [ pileups_table ]
 
@@ -75,7 +63,7 @@ steps:
       ref_fa: ref_fa
       seq_file: tumour_seq_file
       variants: variants_for_contamination
-      intervals: split_intervals/interval_files
+      intervals: interval_files
       output_name: pileup_summary_name
     out: [ pileups_table ]
 

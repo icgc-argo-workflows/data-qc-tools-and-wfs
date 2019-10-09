@@ -1,7 +1,11 @@
 contamination_name: contamination.table
-intervals:  # file with intervals over which to operate
-  class: File
-  path: "data/my-intervals.bed"
+interval_files:  # file with intervals over which to operate
+  - class: File
+    path: data/0000-scattered.interval_list
+  - class: File
+    path: data/0001-scattered.interval_list
+  - class: File
+    path: data/0002-scattered.interval_list
 jvm_mem: 1000
 merged_pileup_name: merged.pipeups.tsv
 normal_seq_file:
@@ -14,7 +18,6 @@ ref_dict:
 ref_fa:
   class: File
   path: "reference/tiny-grch38-chr11-530001-537000.fa"
-scatter_count: 1
 segmentation_name: segments.table
 tumour_seq_file:
   class: File
