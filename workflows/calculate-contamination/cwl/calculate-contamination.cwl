@@ -9,28 +9,28 @@ requirements:
 - class: ScatterFeatureRequirement
 
 inputs:
-    contamination_name: string
     interval_file: File?
-    scatter_count: int
-    split_intervals_extra_args: string?
     jvm_mem: int?
-    merged_pileup_name: string
     normal_seq_file:
+      secondaryFiles:
+        - .bai?
+        - .crai?
       type: File
-      secondaryFiles: ['.bai?', '.crai?']
-    pileup_summary_name: string
     ref_dict: File
-    ref_fa: 
-      secondaryFiles: 
+    ref_fa:
+      secondaryFiles:
         - .fai
         - ^.dict
       type: File
-    segmentation_name: string
+    scatter_count: int
+    split_intervals_extra_args: string?
     tumour_seq_file:
+      secondaryFiles:
+        - .bai?
+        - .crai?
       type: File
-      secondaryFiles: ['.bai?', '.crai?']
-    variants_for_contamination: 
-      secondaryFiles: 
+    variants_for_contamination:
+      secondaryFiles:
         - .tbi
       type: File
 
@@ -64,7 +64,7 @@ steps:
       seq_file: normal_seq_file
       variants: variants_for_contamination
       intervals: split_intervals/interval_files
-      output_name: pileup_summary_name
+      output_name: { default: 'normal_pileup_summary.tsv' }
     out: [ pileups_table ]
 
   get_tumour_pileup_summaries:
@@ -76,7 +76,7 @@ steps:
       seq_file: tumour_seq_file
       variants: variants_for_contamination
       intervals: split_intervals/interval_files
-      output_name: pileup_summary_name
+      output_name: { default: 'tumour_pileup_summary.tsv' }
     out: [ pileups_table ]
 
   merge_normal_pileups:
@@ -85,7 +85,7 @@ steps:
       jvm_mem: jvm_mem
       ref_dict: ref_dict
       input_pileup: get_normal_pileup_summaries/pileups_table
-      output_name: merged_pileup_name
+      output_name: { default: 'normal_pileup_merged.tsv' }
     out: [ merged_pileup ]
 
   merge_tumour_pileups:
@@ -94,7 +94,7 @@ steps:
       jvm_mem: jvm_mem
       ref_dict: ref_dict
       input_pileup: get_tumour_pileup_summaries/pileups_table
-      output_name: merged_pileup_name
+      output_name: { default: 'tumour_pileup_merged.tsv' }
     out: [ merged_pileup ]
 
   calculate_contamination:
@@ -103,8 +103,8 @@ steps:
       jvm_mem: jvm_mem
       tumour_pileups: merge_tumour_pileups/merged_pileup
       normal_pileups: merge_normal_pileups/merged_pileup
-      segmentation_output: segmentation_name
-      contamination_output: contamination_name
+      segmentation_output: { default: 'segments.table' }
+      contamination_output: { default: 'contamination.table' }
     out: [ segmentation_table, contamination_table ]
 
 
