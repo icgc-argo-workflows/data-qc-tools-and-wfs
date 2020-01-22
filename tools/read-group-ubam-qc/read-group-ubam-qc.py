@@ -52,7 +52,7 @@ def run_cmd(cmd):
 
 
 def collect_ubam_info(ubam):
-  cmd = "samtools view -H %s |grep '^@RG' | tr '\t' '\n' |grep '^ID:' | sed 's/ID://'" % ubam
+  cmd = "samtools view -H %s |grep '^@RG' | tr '\t' '\n' |grep '^ID:' | sed 's/ID://g'" % ubam
 
   stdout, _ = run_cmd(cmd)
   read_group_id = stdout.decode("utf-8").strip()
