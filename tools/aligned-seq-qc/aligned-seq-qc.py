@@ -16,88 +16,59 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- Author: Junjun Zhang <junjun.zhang@oicr.on.ca>
+ Author: Linda Xiang <linda.xiang@oicr.on.ca>
+         Junjun Zhang <junjun.zhang@oicr.on.ca>
 """
 
 import os
 import sys
-import json
 from argparse import ArgumentParser
 import subprocess
-
-
-def run_cmd(cmd):
-  stdout, stderr, p, success = '', '', None, True
-  try:
-    p = subprocess.Popen([cmd],
-                          stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE,
-                          shell=True)
-    stdout, stderr = p.communicate()
-  except Exception as e:
-    print('Execution failed: %s' % e, file=sys.stderr)
-    success = False
-
-  if p and p.returncode != 0:
-    print('Execution failed, none zero code returned.', file=sys.stderr)
-    success = False
-
-  print(stdout.decode("utf-8"))
-  print(stderr.decode("utf-8"), file=sys.stderr)
-
-  if not success:
-    sys.exit(p.returncode if p.returncode else 1)
-
-  return stdout, stderr
+from multiprocessing import cpu_count
+import tarfile
+import glob
 
 
 def collect_metrics(args):
-  # generate jvm string
-  if not args.memory is None:
-      jvm_args = '-Xmx'+args.memory+"g"
-  else:
-      jvm_args = ''
+  # generate stats_args string
+  stats_args = [
+      '--reference', args.reference,
+      '-@', str(args.cpus),
+      '-r', args.reference,
+      '--split', 'RG',
+      '-P', os.path.join(os.getcwd(), os.path.basename(args.seq))
+  ]
 
-  # detect the format of input file
-  if os.path.basename(args.seq).endswith(".bam"):
-      cmd1 = (
-          f'java {jvm_args} -jar /tools/picard.jar CollectMultipleMetrics I={args.seq} O=multiple_metrics R={args.reference} ')
+  if args.rdup:
+      stats_args.append('-d')
+  if not args.required_flag == 0:
+      stats_args.append('-f %s' % '0x'+str(args.required_flag))
+  if not args.filtering_flag == 0:
+      stats_args.append('-F %s' % '0x'+str(args.filtering_flag))
 
-  elif os.path.basename(args.seq).endswith(".cram"):
-      cmd1 = (
-          f'samtools view -b -T {args.reference} {args.seq} -o /dev/stdout | '
-          f'java {jvm_args} -jar /tools/picard.jar CollectMultipleMetrics I=/dev/stdin O=multiple_metrics R={args.reference} ')
+  try:
+      cmd = ['samtools', 'stats'] + stats_args + [args.seq]
+      p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+  except Exception as e:
+      sys.exit("Error: %s. 'samtools stats' failed: %s\n" % (e, args.seq))
 
-  else:
-      sys.exit("Unknown alignment sequence format!")
+  with open(os.path.join(os.getcwd(), os.path.basename(args.seq)+".bamstat"), 'w') as f:
+      f.write(p.stdout.decode('utf-8'))
 
-  cmd2 = (
-          f'ASSUME_SORTED=true '
-          f'PROGRAM=null '
-          f'PROGRAM=CollectBaseDistributionByCycle '
-          f'PROGRAM=CollectAlignmentSummaryMetrics '
-          f'PROGRAM=CollectInsertSizeMetrics '
-          f'PROGRAM=MeanQualityByCycle '
-          f'PROGRAM=QualityScoreDistribution '
-          f'PROGRAM=CollectSequencingArtifactMetrics '
-          f'PROGRAM=CollectQualityYieldMetrics '
-          f'METRIC_ACCUMULATION_LEVEL=null '
-          f'METRIC_ACCUMULATION_LEVEL=ALL_READS '
-          f'METRIC_ACCUMULATION_LEVEL=SAMPLE '
-          f'METRIC_ACCUMULATION_LEVEL=LIBRARY '
-          f'METRIC_ACCUMULATION_LEVEL=READ_GROUP')
-
-
-  run_cmd( cmd1+cmd2 )
-
+  # make tar gzip ball of the *.bamstat files
+  tarfile_name = os.path.basename(args.seq)+'.qc_metrics.tgz'
+  with tarfile.open(tarfile_name, "w:gz") as tar:
+      for statsfile in glob.glob(os.path.join(os.getcwd(), "*.bamstat")):
+          tar.add(statsfile, arcname=os.path.basename(statsfile))
 
 def main():
   parser = ArgumentParser()
-  parser.add_argument("-s", "--seq", dest="seq", help="Aligned sequence file", type=str)
-  parser.add_argument('-r', '--reference', dest='reference',
-                      type=str, help='reference fasta', required=True)
-  parser.add_argument('-m', '--memory', dest='memory',
-                      type=str, help='allocated process memory', default=None )
+  parser.add_argument("-s", "--seq", dest="seq", help="Aligned sequence file", type=str, required=True)
+  parser.add_argument('-r', '--reference', dest='reference', type=str, help='reference fasta', required=True)
+  parser.add_argument('-n', '--cpus', dest='cpus', type=int, help='number of cpu cores', default=cpu_count())
+  parser.add_argument("-d", "--rdup", dest='rdup', action='store_true')
+  parser.add_argument("-f", "--required_flag", dest='required_flag', type=int, default=0)
+  parser.add_argument("-F", "--filtering_flag", dest='filtering_flag', type=int, default=0)
 
   args = parser.parse_args()
 

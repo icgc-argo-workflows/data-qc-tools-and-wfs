@@ -23,11 +23,14 @@
  */
 
 nextflow.preview.dsl=2
-version = '0.1.0.0'
+version = '0.2.0.0'
 
 params.seq = ""
 params.container_version = ""
 params.ref_genome = ""
+params.rdup = false
+params.required_flag = ""
+params.filtering_flag = ""
 
 
 process alignedSeqQC {
@@ -36,16 +39,23 @@ process alignedSeqQC {
   input:
     path seq
     path ref_genome
+    val rdup
+    val required_flag
+    val filtering_flag
 
   output:
-    path "multiple_metrics.*", emit: metrics
+    path "*.qc_metrics.tgz", emit: metrics
 
   script:
-    jvm_mem_GB = task.memory ? "-m " + (task.memory.toGiga()-1) : ""
-
+    arg_rdup = rdup ? "-d" : ""
+    arg_required_flag = required_flag ? "-f ${required_flag}" : ""
+    arg_filtering_flag = filtering_flag ? "-F ${filtering_flag}" : ""
     """
     aligned-seq-qc.py -s ${seq} \
                       -r ${ref_genome} \
-                      ${jvm_mem_GB}
+                      -n ${task.cpus} \
+                      ${arg_rdup} \
+                      ${arg_required_flag} \
+                      ${arg_filtering_flag}
     """
 }

@@ -25,8 +25,11 @@
 nextflow.preview.dsl=2
 
 params.seq = ""
-params.container_version = ''
+params.container_version = ""
 params.ref_genome = ""
+params.rdup = false
+params.required_flag = ""
+params.filtering_flag = ""
 
 
 include '../aligned-seq-qc.nf' params(params)
@@ -35,7 +38,11 @@ include '../aligned-seq-qc.nf' params(params)
 workflow {
   main:
     alignedSeqQC(
-      file(params.seq), file(params.ref_genome)
+      file(params.seq), \
+      file(params.ref_genome), \
+      params.rdup, \
+      params.required_flag, \
+      params.filtering_flag
     )
 
   publish:
