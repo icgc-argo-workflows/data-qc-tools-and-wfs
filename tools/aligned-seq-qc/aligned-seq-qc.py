@@ -48,7 +48,7 @@ def collect_metrics(args):
 
   try:
       cmd = ['samtools', 'stats'] + stats_args + [args.seq]
-      p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+      p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
   except Exception as e:
       sys.exit("Error: %s. 'samtools stats' failed: %s\n" % (e, args.seq))
 
