@@ -34,7 +34,7 @@ params.mem = 2  // in GB
 include '../aligned-seq-qc.nf' params(params)
 
 Channel
-  .fromPath(getSecondaryFiles(params.ref_genome_gz), checkIfExists: true)
+  .fromPath(getAlignedQCSecondaryFiles(params.ref_genome_gz), checkIfExists: true)
   .set { ref_genome_gz_ch }
 
 workflow {

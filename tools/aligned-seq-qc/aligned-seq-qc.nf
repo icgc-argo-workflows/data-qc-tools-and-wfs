@@ -31,7 +31,7 @@ params.ref_genome_gz = ""
 params.cpus = 1
 params.mem = 2  // in GB
 
-def getSecondaryFiles(main_file){  //this is kind of like CWL's secondary files
+def getAlignedQCSecondaryFiles(main_file){  //this is kind of like CWL's secondary files
   def all_files = []
   for (ext in ['.fai', '.gzi']) {
     all_files.add(main_file + ext)
