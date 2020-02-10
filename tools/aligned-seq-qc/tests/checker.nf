@@ -26,23 +26,23 @@ nextflow.preview.dsl=2
 
 params.seq = ""
 params.container_version = ""
-params.ref_genome = ""
-params.rdup = false
-params.required_flag = ""
-params.filtering_flag = ""
+params.ref_genome_gz = ""
+params.cpus = 1
+params.mem = 2  // in GB
 
 
 include '../aligned-seq-qc.nf' params(params)
 
+Channel
+  .fromPath(getSecondaryFiles(params.ref_genome_gz), checkIfExists: true)
+  .set { ref_genome_gz_ch }
 
 workflow {
   main:
     alignedSeqQC(
       file(params.seq), \
-      file(params.ref_genome), \
-      params.rdup, \
-      params.required_flag, \
-      params.filtering_flag
+      file(params.ref_genome_gz), \
+      ref_genome_gz_ch.collect()
     )
 
   publish:

@@ -39,13 +39,6 @@ def collect_metrics(args):
       '-P', os.path.join(os.getcwd(), os.path.basename(args.seq))
   ]
 
-  if args.rdup:
-      stats_args.append('-d')
-  if not args.required_flag == 0:
-      stats_args.append('-f %s' % '0x'+str(args.required_flag))
-  if not args.filtering_flag == 0:
-      stats_args.append('-F %s' % '0x'+str(args.filtering_flag))
-
   try:
       cmd = ['samtools', 'stats'] + stats_args + [args.seq]
       p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
@@ -66,9 +59,6 @@ def main():
   parser.add_argument("-s", "--seq", dest="seq", help="Aligned sequence file", type=str, required=True)
   parser.add_argument('-r', '--reference', dest='reference', type=str, help='reference fasta', required=True)
   parser.add_argument('-n', '--cpus', dest='cpus', type=int, help='number of cpu cores', default=cpu_count())
-  parser.add_argument("-d", "--rdup", dest='rdup', action='store_true')
-  parser.add_argument("-f", "--required_flag", dest='required_flag', type=int, default=0)
-  parser.add_argument("-F", "--filtering_flag", dest='filtering_flag', type=int, default=0)
 
   args = parser.parse_args()
 

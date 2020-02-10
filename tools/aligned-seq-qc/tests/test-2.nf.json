@@ -1,7 +1,0 @@
-{
-  "seq": "data/SA610149.0.20200122.wgs.grch38.cram",
-  "ref_genome": "reference/tiny-grch38-chr11-530001-537000.fa.gz",
-  "rdup": true,
-  "required_flag": 40,
-  "filtering_flag": 900
-}
