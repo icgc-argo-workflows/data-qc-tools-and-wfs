@@ -72,9 +72,10 @@ def collect_ubam_info(ubam):
     f.write(json.dumps(ubam_info, indent=2))
 
 
-def collect_metrics(ubam):
+def collect_metrics(ubam, mem=None):
   metrics_file = "%s.quality_yield_metrics.txt" % ubam
-  command = "java -jar /tools/picard.jar CollectQualityYieldMetrics I=%s O=%s" % (ubam, metrics_file)
+  jvm_Xmx = "-Xmx%sM" % mem if mem else ""
+  command = "java %s -jar /tools/picard.jar CollectQualityYieldMetrics I=%s O=%s" % (jvm_Xmx, ubam, metrics_file)
 
   run_cmd(command)
 
@@ -82,11 +83,15 @@ def collect_metrics(ubam):
 def main():
   parser = ArgumentParser()
   parser.add_argument("-b", "--ubam", dest="ubam", help="Lane level unmapped BAM file", type=str)
+  parser.add_argument("-m", "--mem", dest="mem", help="Maximal allocated memory in MB", type=int)
   args = parser.parse_args()
 
   collect_ubam_info(args.ubam)
 
-  collect_metrics(args.ubam)
+  collect_metrics(args.ubam, args.mem)
+
+  cmd = 'tar czf %s.ubam_qc_metrics.tgz *.quality_yield_metrics.txt *.ubam_info.json' % args.ubam
+  run_cmd(cmd)
 
 
 if __name__ == '__main__':

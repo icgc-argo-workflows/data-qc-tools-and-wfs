@@ -25,6 +25,8 @@ nextflow.preview.dsl=2
 
 params.ubam = "data/C0HVY_2.lane.bam"
 params.container_version = ''
+params.cpus = 1
+params.mem = 1.5  // in GB
 
 include '../read-group-ubam-qc.nf' params(params)
 
@@ -36,6 +38,5 @@ workflow {
     )
 
   publish:
-    readGroupUBamQC.out.metrics to: 'outdir', overwrite: true
-    readGroupUBamQC.out.ubam_info to: 'outdir', overwrite: true
+    readGroupUBamQC.out.ubam_qc_metrics to: 'outdir', overwrite: true
 }

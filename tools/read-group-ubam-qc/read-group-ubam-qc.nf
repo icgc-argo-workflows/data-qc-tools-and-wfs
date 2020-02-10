@@ -26,20 +26,23 @@ version = '0.1.0.0'
 
 params.ubam = "tests/data/C0HVY_2.lane.bam"
 params.container_version = ''
+params.cpus = 1
+params.mem = 1.5  // in GB
 
 
 process readGroupUBamQC {
   container "quay.io/icgc-argo/read-group-ubam-qc:read-group-ubam-qc.${params.container_version ?: version}"
+  cpus params.cpus
+  memory "${params.mem} GB"
 
   input:
     path ubam
 
   output:
-    path "*.quality_yield_metrics.txt", emit: metrics
-    path "*.ubam_info.json", emit: ubam_info
+    path "*.ubam_qc_metrics.tgz", emit: ubam_qc_metrics
 
   script:
     """
-    read-group-ubam-qc.py -b ${ubam}
+    read-group-ubam-qc.py -b ${ubam} -m ${(int) (params.mem * 1000)}
     """
 }
