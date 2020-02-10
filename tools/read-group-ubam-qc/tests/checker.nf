@@ -26,7 +26,7 @@ nextflow.preview.dsl=2
 params.ubam = "data/C0HVY_2.lane.bam"
 params.container_version = ''
 params.cpus = 1
-params.mem = 1.5  // in GB
+params.mem = 1.2  // in GB
 
 include '../read-group-ubam-qc.nf' params(params)
 
