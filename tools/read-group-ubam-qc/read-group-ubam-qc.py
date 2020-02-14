@@ -75,7 +75,8 @@ def collect_ubam_info(ubam):
 def collect_metrics(ubam, mem=None):
   metrics_file = "%s.quality_yield_metrics.txt" % ubam
   jvm_Xmx = "-Xmx%sM" % mem if mem else ""
-  command = "java %s -jar /tools/picard.jar CollectQualityYieldMetrics I=%s O=%s" % (jvm_Xmx, ubam, metrics_file)
+  command = "java %s -jar /tools/picard.jar CollectQualityYieldMetrics " % jvm_Xmx+ \
+            "I=%s O=%s ASSUME_SORTED=false VALIDATION_STRINGENCY=LENIENT" % (ubam, metrics_file)
 
   run_cmd(command)
 
