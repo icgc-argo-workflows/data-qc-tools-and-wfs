@@ -28,7 +28,7 @@ params.container_version = ''
 params.cpus = 1
 params.mem = 1.2  // in GB
 
-include '../read-group-ubam-qc.nf' params(params)
+include readGroupUBamQC from '../read-group-ubam-qc.nf' params(params)
 
 
 workflow {
@@ -39,4 +39,5 @@ workflow {
 
   publish:
     readGroupUBamQC.out.ubam_qc_metrics to: 'outdir', overwrite: true
+    readGroupUBamQC.out.ubam_info_json to: 'outdir', overwrite: true
 }
