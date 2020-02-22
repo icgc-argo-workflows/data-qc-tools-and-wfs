@@ -73,9 +73,9 @@ def collect_ubam_info(ubam, metrics_file):
     metrics = csv.DictReader(filter(lambda row: not re.match(r'^#|\s*$', row), m), delimiter='\t')
     for row in metrics:
       ubam_info.update({
-        'total_reads': row['TOTAL_READS'],
-        'pf_reads': row['PF_READS'],
-        'read_length': row['READ_LENGTH'],
+        'total_reads': int(row['TOTAL_READS']),
+        'pf_reads': int(row['PF_READS']),
+        'read_length': int(row['READ_LENGTH']),
       })
       break  # should only have one data row
 
