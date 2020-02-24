@@ -24,6 +24,8 @@ import sys
 import json
 from argparse import ArgumentParser
 import subprocess
+import csv
+import re
 
 
 def run_cmd(cmd):
@@ -51,7 +53,7 @@ def run_cmd(cmd):
   return stdout, stderr
 
 
-def collect_ubam_info(ubam):
+def collect_ubam_info(ubam, metrics_file):
   cmd = "samtools view -H %s |grep '^@RG' | tr '\t' '\n' |grep '^ID:' | sed 's/ID://g'" % ubam
 
   stdout, _ = run_cmd(cmd)
@@ -64,9 +66,18 @@ def collect_ubam_info(ubam):
 
   ubam_info = {
     'read_group_id': read_group_id,
-    'name': os.path.basename(ubam),
-    'size': os.path.getsize(ubam)
+    'file_size': os.path.getsize(ubam)
   }
+
+  with open(metrics_file, 'r') as m:
+    metrics = csv.DictReader(filter(lambda row: not re.match(r'^#|\s*$', row), m), delimiter='\t')
+    for row in metrics:
+      ubam_info.update({
+        'total_reads': int(row['TOTAL_READS']),
+        'pf_reads': int(row['PF_READS']),
+        'read_length': int(row['READ_LENGTH']),
+      })
+      break  # should only have one data row
 
   with open("%s.ubam_info.json" % ubam, 'w') as f:
     f.write(json.dumps(ubam_info, indent=2))
@@ -75,9 +86,12 @@ def collect_ubam_info(ubam):
 def collect_metrics(ubam, mem=None):
   metrics_file = "%s.quality_yield_metrics.txt" % ubam
   jvm_Xmx = "-Xmx%sM" % mem if mem else ""
-  command = "java %s -jar /tools/picard.jar CollectQualityYieldMetrics I=%s O=%s" % (jvm_Xmx, ubam, metrics_file)
+  command = "java %s -jar /tools/picard.jar CollectQualityYieldMetrics " % jvm_Xmx+ \
+            "I=%s O=%s VALIDATION_STRINGENCY=LENIENT" % (ubam, metrics_file)
 
   run_cmd(command)
+
+  return metrics_file
 
 
 def main():
@@ -86,9 +100,9 @@ def main():
   parser.add_argument("-m", "--mem", dest="mem", help="Maximal allocated memory in MB", type=int)
   args = parser.parse_args()
 
-  collect_ubam_info(args.ubam)
+  metrics_file = collect_metrics(args.ubam, args.mem)
 
-  collect_metrics(args.ubam, args.mem)
+  collect_ubam_info(args.ubam, metrics_file)
 
   cmd = 'tar czf %s.ubam_qc_metrics.tgz *.quality_yield_metrics.txt *.ubam_info.json' % args.ubam
   run_cmd(cmd)
