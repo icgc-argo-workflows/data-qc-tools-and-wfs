@@ -27,6 +27,7 @@ import subprocess
 from multiprocessing import cpu_count
 import tarfile
 import glob
+import json
 
 
 def collect_metrics(args):
@@ -48,11 +49,17 @@ def collect_metrics(args):
   with open(os.path.join(os.getcwd(), os.path.basename(args.seq)+".bamstat"), 'w') as f:
       f.write(p.stdout.decode('utf-8'))
 
+  p = subprocess.run('samtools --version | grep samtools', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True, shell=True)
+  tool_ver = "samtools:stats@%s" % p.stdout.decode('utf-8').strip().split(' ')[-1]
+  with open(os.path.basename(args.seq) + '.extra_info.json', "w") as j:
+      j.write(json.dumps({ "tool": tool_ver }, indent=2))
+
   # make tar gzip ball of the *.bamstat files
   tarfile_name = os.path.basename(args.seq)+'.qc_metrics.tgz'
   with tarfile.open(tarfile_name, "w:gz") as tar:
-      for statsfile in glob.glob(os.path.join(os.getcwd(), "*.bamstat")):
+      for statsfile in glob.glob(os.path.join(os.getcwd(), "*.bamstat")) + glob.glob(os.path.join(os.getcwd(), "*.extra_info.json")):
           tar.add(statsfile, arcname=os.path.basename(statsfile))
+
 
 def main():
   parser = ArgumentParser()
