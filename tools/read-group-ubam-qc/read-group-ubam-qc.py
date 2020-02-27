@@ -50,21 +50,26 @@ def run_cmd(cmd):
   if not success:
     sys.exit(p.returncode if p.returncode else 1)
 
-  return stdout, stderr
+  return stdout.decode("utf-8"), stderr.decode("utf-8")
 
 
-def collect_ubam_info(ubam, metrics_file):
+def collect_extra_info(ubam, metrics_file):
   cmd = "samtools view -H %s |grep '^@RG' | tr '\t' '\n' |grep '^ID:' | sed 's/ID://g'" % ubam
 
   stdout, _ = run_cmd(cmd)
-  read_group_id = stdout.decode("utf-8").strip()
+  read_group_id = stdout.strip()
 
   if not read_group_id:
     sys.exit('Error: unable to find read group ID in lane level BAM %s' % ubam)
   elif '\n' in read_group_id:
     sys.exit('Error: more than one read group ID found in lane level BAM %s' % ubam)
 
-  ubam_info = {
+  # this is odd, has to pipe to 'cat' to avoid raising exception due to non-zero returncode by picard --version
+  version_cmd = "java -jar /tools/picard.jar CollectQualityYieldMetrics --version 2>&1 | cat"
+  version, _ = run_cmd(version_cmd)
+
+  extra_info = {
+    'tool': "picard:CollectQualityYieldMetrics@%s" % version.strip(),
     'read_group_id': read_group_id,
     'file_size': os.path.getsize(ubam)
   }
@@ -72,15 +77,15 @@ def collect_ubam_info(ubam, metrics_file):
   with open(metrics_file, 'r') as m:
     metrics = csv.DictReader(filter(lambda row: not re.match(r'^#|\s*$', row), m), delimiter='\t')
     for row in metrics:
-      ubam_info.update({
+      extra_info.update({
         'total_reads': int(row['TOTAL_READS']),
         'pf_reads': int(row['PF_READS']),
         'read_length': int(row['READ_LENGTH']),
       })
       break  # should only have one data row
 
-  with open("%s.ubam_info.json" % ubam, 'w') as f:
-    f.write(json.dumps(ubam_info, indent=2))
+  with open("%s.extra_info.json" % ubam, 'w') as f:
+    f.write(json.dumps(extra_info, indent=2))
 
 
 def collect_metrics(ubam, mem=None):
@@ -102,9 +107,9 @@ def main():
 
   metrics_file = collect_metrics(args.ubam, args.mem)
 
-  collect_ubam_info(args.ubam, metrics_file)
+  collect_extra_info(args.ubam, metrics_file)
 
-  cmd = 'tar czf %s.ubam_qc_metrics.tgz *.quality_yield_metrics.txt *.ubam_info.json' % args.ubam
+  cmd = 'tar czf %s.ubam_qc_metrics.tgz *.quality_yield_metrics.txt *.extra_info.json' % args.ubam
   run_cmd(cmd)
 
 
