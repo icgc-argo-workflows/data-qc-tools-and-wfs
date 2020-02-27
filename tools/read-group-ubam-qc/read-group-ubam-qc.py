@@ -69,7 +69,7 @@ def collect_extra_info(ubam, metrics_file):
   version, _ = run_cmd(version_cmd)
 
   extra_info = {
-    'tool': "picard@%s" % version.strip(),
+    'tool': "picard:CollectQualityYieldMetrics@%s" % version.strip(),
     'read_group_id': read_group_id,
     'file_size': os.path.getsize(ubam)
   }
