@@ -31,8 +31,7 @@ params.cpus = 1
 params.mem = 2  // in GB
 
 
-include alignedSeqQC from '../aligned-seq-qc.nf' params(params)
-include getAlignedQCSecondaryFiles from '../aligned-seq-qc.nf' params(params)
+include { alignedSeqQC; getAlignedQCSecondaryFiles } from '../aligned-seq-qc.nf' params(params)
 
 Channel
   .fromPath(getAlignedQCSecondaryFiles(params.ref_genome_gz), checkIfExists: true)
