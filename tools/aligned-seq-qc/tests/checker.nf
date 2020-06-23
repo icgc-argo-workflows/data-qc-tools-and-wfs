@@ -40,9 +40,10 @@ Channel
 workflow {
   main:
     alignedSeqQC(
-      file(params.seq), \
-      file(params.ref_genome_gz), \
-      ref_genome_gz_ch.collect()
+      file(params.seq),
+      file(params.ref_genome_gz),
+      ref_genome_gz_ch.collect(),
+      true
     )
 
   publish:
